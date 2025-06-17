@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat with Alex</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      padding: 10px 15px;
+      border-radius: 15px;
+      max-width: 80%;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: #d1e7dd;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: #e2e3e5;
+    }
+
+    .input-box {
+      display: flex;
+      padding: 15px;
+      border-top: 1px solid #ddd;
+    }
+
+    .input-box input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+    }
+
+    .input-box button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .clear-btn {
+      background-color: #dc3545;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 10px;
+      margin: 10px auto 0 auto;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="messages" id="chat"></div>
+  <button class="clear-btn" onclick="clearChat()">Clear Conversation</button>
+  <div class="input-box">
+    <input type="text" id="userInput" placeholder="Talk to Alex..." onkeydown="handleEnter(event)" />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const chat = document.getElementById("chat");
+
+  function addMessage(text, sender) {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `message ${sender}`;
+    msgDiv.textContent = text;
+    chat.appendChild(msgDiv);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, "user");
+    input.value = "";
+
+    try {
+      const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+      addMessage(data.reply, "bot");
+    } catch (err) {
+      console.error(err);
+      addMessage("Oops! Something went wrong.", "bot");
+    }
+  }
+
+  function handleEnter(event) {
+    if (event.key === "Enter") sendMessage();
+  }
+
+  async function clearChat() {
+    await fetch("http://localhost:5000/clear", {
+      method: "POST",
+      credentials: "include"
+    });
+    chat.innerHTML = "";
+    addMessage("Hi! I'm Alex. How are you feeling today?", "bot");
+  }
+
+  window.onload = () => {
+    addMessage("Hi! I'm Alex. How are you feeling today?", "bot");
+  };
+</script>
+
+</body>
+</html>
