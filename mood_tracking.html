@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mood-Based Motivational Quotes</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f8fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      color: #555;
+    }
+
+    input[type="number"], textarea {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .quotes {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-top: 1px solid #eee;
+    }
+
+    .quote {
+      margin-bottom: 1rem;
+      font-style: italic;
+      color: #444;
+    }
+
+    .error {
+      color: red;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Mood-Based Motivational Quotes</h2>
+    <form id="quoteForm">
+      <label for="moodScore">Mood Score (1-10)</label>
+      <input type="number" id="moodScore" name="moodScore" min="1" max="10" required />
+
+      <label for="moodDescription">Mood Description (optional)</label>
+      <textarea id="moodDescription" name="moodDescription" rows="3" placeholder="Describe how you're feeling..."></textarea>
+
+      <button type="submit">Get Quotes</button>
+    </form>
+
+    <div class="loading" id="loading" style="display: none;">Loading quotes...</div>
+    <div class="error" id="error"></div>
+    <div class="quotes" id="quotesContainer"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("quoteForm");
+    const quotesContainer = document.getElementById("quotesContainer");
+    const errorDiv = document.getElementById("error");
+    const loadingDiv = document.getElementById("loading");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorDiv.textContent = "";
+      quotesContainer.innerHTML = "";
+      loadingDiv.style.display = "block";
+
+      const moodScore = document.getElementById("moodScore").value;
+      const moodDescription = document.getElementById("moodDescription").value;
+
+      try {
+        const response = await fetch("http://localhost:5000/motivational-quotes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mood_score: parseInt(moodScore),
+            mood_description: moodDescription,
+          }),
+        });
+
+        const data = await response.json();
+        loadingDiv.style.display = "none";
+
+        if (response.ok) {
+          data.motivational_quotes.forEach((quote) => {
+            const quoteEl = document.createElement("div");
+            quoteEl.className = "quote";
+            quoteEl.textContent = quote;
+            quotesContainer.appendChild(quoteEl);
+          });
+        } else {
+          errorDiv.textContent = data.error || "Something went wrong.";
+        }
+      } catch (err) {
+        loadingDiv.style.display = "none";
+        errorDiv.textContent = "Failed to fetch quotes. Please try again.";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
